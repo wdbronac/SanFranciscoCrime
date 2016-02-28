@@ -24,14 +24,13 @@ longitudes = df['X'].as_matrix()
 latitudes = df['Y'].as_matrix()
 #couleurs = ['r' for _ in range(len(latitudes)) ]
 #rayons =[30  for _ in range(len(latitudes)) ]
-classes = pd.Series(df['Category'], dtype = 'category').cat.categories
-nb_classes = len(df['Category'].unique())
+nb_classes = df['Category'].unique
 # replacing categories by numbers labels
-df['Category'] = pd.Series(df['Category'], dtype = 'category').cat.rename_categories(range(nb_classes))
+df['Category'] = pd.Series(df['Category'], dtype = 'Category').cat.rename_categories(range(len(nb_classes)))
 
 #computes the prototypes of kmeans and add it to latitude and longitude
 print('Geographic clustering...')
-clus = sklearn.cluster.KMeans(n_clusters = 100)
+clus = sklearn.cluster.KMeans(n_clusters = 50)
 x_train = df[['X','Y']];
 clus.fit(x_train.as_matrix())
 clus_long = clus.cluster_centers_[:,0]
