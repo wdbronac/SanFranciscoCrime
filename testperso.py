@@ -1,5 +1,5 @@
-from theano import lasagne
-
+import theano.tensor as T
+import lasagne
 import onehot as oh
 import matplotlib.pyplot as plt
 import numpy as np
