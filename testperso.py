@@ -232,6 +232,7 @@ def main():
         train_batches = 0
         start_time = time.time()
         for batch in iterate_minibatches(X_train, y_train, 500, shuffle=True):
+            print('.')
             inputs, targets = batch
             train_err += train_fn(inputs, targets, allow_input_downcast=True)
             train_batches += 1
