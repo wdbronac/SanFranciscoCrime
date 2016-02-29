@@ -83,7 +83,7 @@ def load_dataset():
     print('Done.')
     return  X_train, y_train, X_val, y_val
 
-def build_mlp(input_var = None): 
+def build_mlp(input_var = None, allow_input_downcast=True): 
     #define the inputs of the different perceptrons
     #input_geo = input_var[0:1] # input_geo: uniquement la latitude et la longitude
     #input_geo_district = input_var[9:12]
@@ -180,7 +180,7 @@ def build_mlp(input_var = None):
                                 nonlinearity=lasagne.nonlinearities.softmax)
     return l_out
 
-def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
+def iterate_minibatches(inputs, targets, batchsize, shuffle=False, allow_input_downcast=True):
     assert len(inputs) == len(targets)
     if shuffle:
         indices = np.arange(len(inputs))
@@ -192,7 +192,7 @@ def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
             excerpt = slice(start_idx, start_idx + batchsize)
         yield inputs[excerpt], targets[excerpt]
 
-def main():
+def main(allow_input_downcast=True):
     # Load the dataset
     #X_train, y_train, X_val, y_val, X_test, y_test = load_dataset()
     X_train, y_train, X_val, y_val= load_dataset()
