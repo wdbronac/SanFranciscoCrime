@@ -83,7 +83,7 @@ def load_dataset():
     print('Done.')
     return  X_train, y_train, X_val, y_val
 
-def build_mlp(input_var = None, allow_input_downcast=True): 
+def build_mlp(input_var = None): 
     #define the inputs of the different perceptrons
     #input_geo = input_var[0:1] # input_geo: uniquement la latitude et la longitude
     #input_geo_district = input_var[9:12]
@@ -180,7 +180,7 @@ def build_mlp(input_var = None, allow_input_downcast=True):
                                 nonlinearity=lasagne.nonlinearities.softmax)
     return l_out
 
-def iterate_minibatches(inputs, targets, batchsize, shuffle=False, allow_input_downcast=True):
+def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
     assert len(inputs) == len(targets)
     if shuffle:
         indices = np.arange(len(inputs))
@@ -192,7 +192,7 @@ def iterate_minibatches(inputs, targets, batchsize, shuffle=False, allow_input_d
             excerpt = slice(start_idx, start_idx + batchsize)
         yield inputs[excerpt], targets[excerpt]
 
-def main(allow_input_downcast=True):
+def main():
     # Load the dataset
     #X_train, y_train, X_val, y_val, X_test, y_test = load_dataset()
     X_train, y_train, X_val, y_val= load_dataset()
@@ -233,7 +233,7 @@ def main(allow_input_downcast=True):
         start_time = time.time()
         for batch in iterate_minibatches(X_train, y_train, 500, shuffle=True):
             inputs, targets = batch
-            train_err += train_fn(inputs, targets)
+            train_err += train_fn(inputs, targets, allow_input_downcast=True)
             train_batches += 1
             # And a full pass over the validation data:
             val_err = 0
@@ -241,7 +241,7 @@ def main(allow_input_downcast=True):
             val_batches = 0
         for batch in iterate_minibatches(X_val, y_val, 500, shuffle=False):
             inputs, targets = batch
-            err, acc = val_fn(inputs, targets)
+            err, acc = val_fn(inputs, targets, allow_input_downcast=True)
             val_err += err
             val_acc += acc
             val_batches += 1
