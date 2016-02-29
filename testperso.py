@@ -234,7 +234,7 @@ def main():
         for batch in iterate_minibatches(X_train, y_train, 500, shuffle=True):
             print('.')
             inputs, targets = batch
-            train_err += train_fn(inputs, targets, allow_input_downcast=True)
+            train_err += train_fn(inputs, targets)
             train_batches += 1
             # And a full pass over the validation data:
             val_err = 0
@@ -242,7 +242,7 @@ def main():
             val_batches = 0
         for batch in iterate_minibatches(X_val, y_val, 500, shuffle=False):
             inputs, targets = batch
-            err, acc = val_fn(inputs, targets, allow_input_downcast=True)
+            err, acc = val_fn(inputs, targets)
             val_err += err
             val_acc += acc
             val_batches += 1
