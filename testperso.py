@@ -8,8 +8,6 @@ import numpy as np
 #from mpl_toolkits.basemap import Basemap
 import csv
 import pandas as pd
-import sklearn
-from sklearn.cluster import KMeans
 
 
 #defining the parameters of the training
