@@ -218,10 +218,10 @@ def main():
 
 
 
-    train_fn = theano.function([input_var, target_var], loss, updates=updates)
+    train_fn = theano.function([input_var, target_var], loss, updates=updates, allow_input_downcast=True)
 
 
-    val_fn = theano.function([input_var, target_var], [test_loss, test_acc])
+    val_fn = theano.function([input_var, target_var], [test_loss, test_acc], allow_input_downcast=True)
 
 
     print('Test')
