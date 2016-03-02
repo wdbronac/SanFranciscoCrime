@@ -133,7 +133,7 @@ def build_mlp(input_var = None):
 #
 
     #concatenating the layers of both geographic coordinates and district information: (l_geo_hid2_drop, l_date_hid2_drop) = l_tot_in
-    l_geo_tot_in = lasagne.layers.concat([output_geo_district, l_geo_out], axis=1)
+    l_geo_tot_in = lasagne.layers.concat([output_geo_district, l_out_geo], axis=1)
     #l_geo_tot_in_drop = lasagne.layers.DropoutLayer(l_geo_tot_in, p=0.2)
     l_geo_tot_out = l_geo_tot_in
 
