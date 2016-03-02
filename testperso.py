@@ -93,84 +93,96 @@ def build_mlp(input_var = None):
     #input layer
     l_geo_in = lasagne.layers.SliceLayer(l_in, indices=slice(0, 1))
     #l_geo_in = lasagne.layers.InputLayer(shape = input_geo.shape, input_var = input_geo)
-    l_geo_in_drop = lasagne.layers.DropoutLayer(l_geo_in, p=0.2)
+    #l_geo_in_drop = lasagne.layers.DropoutLayer(l_geo_in, p=0.2)
+    l_geo_in_drop = l_geo_in
     #hidden layer
     l_geo_hid1 = lasagne.layers.DenseLayer(
-                    l_geo_in_drop, num_units=800,
+                    l_geo_in_drop, num_units=900,
                             nonlinearity=lasagne.nonlinearities.rectify,
                                     W=lasagne.init.GlorotUniform())
     l_geo_hid1_drop = lasagne.layers.DropoutLayer(l_geo_hid1, p=0.5)
     #hidden layer
     l_geo_hid2= lasagne.layers.DenseLayer(
-                    l_geo_hid1_drop, num_units=800,
+                    l_geo_hid1_drop, num_units=900,
                             nonlinearity=lasagne.nonlinearities.rectify)
     l_geo_hid2_drop = lasagne.layers.DropoutLayer(l_geo_hid2, p=0.5)
 
+    l_geo_hid3= lasagne.layers.DenseLayer(
+                    l_geo_hid2_drop, num_units=900,
+                            nonlinearity=lasagne.nonlinearities.rectify)
+    l_out_geo = lasagne.layers.DropoutLayer(l_geo_hid3, p=0.5)
+
     ##building the network for the district input_geo_district > l_geo_district_hid_2_drop
     #input layer
-    input_geo_district = lasagne.layers.SliceLayer(l_in, indices=slice(9,12))
+    #input_geo_district = lasagne.layers.SliceLayer(l_in, indices=slice(9,12))
+    output_geo_district = lasagne.layers.SliceLayer(l_in, indices=slice(9,12))
     #l_geo_district_in = lasagne.layers.InputLayer(shape =  input_geo_district.shape, input_var = input_geo_district)
     #l_geo_district_in_drop = lasagne.layers.DropoutLayer(l_geo_district_in, p=0.2)
     #hidden layer
-    l_geo_district_hid1 = lasagne.layers.DenseLayer(
-                   # l_geo_district_in_drop, num_units=802,
-                           input_geo_district, num_units=802,
-                                   nonlinearity=lasagne.nonlinearities.rectify,
-                                           W=lasagne.init.GlorotUniform())
-    l_geo_district_hid1_drop = lasagne.layers.DropoutLayer(l_geo_district_hid1, p=0.5)
-    #hidden layer
-    l_geo_district_hid2= lasagne.layers.DenseLayer(
-                    l_geo_district_hid1_drop, num_units=800,
-                            nonlinearity=lasagne.nonlinearities.rectify)
-    l_geo_district_hid2_drop = lasagne.layers.DropoutLayer(l_geo_district_hid2, p=0.5)
-
+#    l_geo_district_hid1 = lasagne.layers.DenseLayer(
+#                   # l_geo_district_in_drop, num_units=802,
+#                           input_geo_district, num_units=10,
+#                                   nonlinearity=lasagne.nonlinearities.rectify,
+#                                           W=lasagne.init.GlorotUniform())
+#    l_geo_district_hid1_drop = lasagne.layers.DropoutLayer(l_geo_district_hid1, p=0.5)
+#    #hidden layer
+#    l_geo_district_hid2= lasagne.layers.DenseLayer(
+#                    l_geo_district_hid1_drop, num_units=10,
+#                            nonlinearity=lasagne.nonlinearities.rectify)
+#    l_geo_district_hid2_drop = lasagne.layers.DropoutLayer(l_geo_district_hid2, p=0.5)
+#
 
     #concatenating the layers of both geographic coordinates and district information: (l_geo_hid2_drop, l_date_hid2_drop) = l_tot_in
-    l_geo_tot_in = lasagne.layers.concat([l_geo_district_hid2_drop, l_geo_hid2_drop], axis=1)
-    l_geo_tot_in_drop = lasagne.layers.DropoutLayer(l_geo_tot_in, p=0.2)
+    l_geo_tot_in = lasagne.layers.concat([output_geo_district, l_geo_out], axis=1)
+    #l_geo_tot_in_drop = lasagne.layers.DropoutLayer(l_geo_tot_in, p=0.2)
+    l_geo_tot_out = l_geo_tot_in
 
     #build the distributed representation for the geography: l_out_geo
     l_geo_tot_hid1 = lasagne.layers.DenseLayer(
                     l_geo_tot_in_drop, num_units=800,
                             nonlinearity=lasagne.nonlinearities.rectify)
     l_geo_tot_hid_1_drop = lasagne.layers.DropoutLayer(l_geo_tot_hid1, p=0.5)
+    l_geo_tot_hid2 = lasagne.layers.DenseLayer(
+                    l_geo_tot_hid_1_drop, num_units=800,
+                            nonlinearity=lasagne.nonlinearities.rectify)
+    l_geo_tot_out = lasagne.layers.DropoutLayer(l_geo_tot_hid2, p=0.5)
 
 
     #TODO : attention j ai ecrit exactement la meme chose ici
     #build the network connected to the date: l_date_in > l_date_hid2_drop
     l_date_in = lasagne.layers.SliceLayer(l_in, indices=slice(2,8))
-    l_date_in_drop = lasagne.layers.DropoutLayer(l_date_in, p=0.2)
+    #l_date_in_drop = lasagne.layers.DropoutLayer(l_date_in, p=0.2)
     #hidden layer
     l_date_hid1 = lasagne.layers.DenseLayer(
-                    l_date_in_drop, num_units=800,
+                    l_date_in, num_units=50,
                             nonlinearity=lasagne.nonlinearities.rectify,
                                     W=lasagne.init.GlorotUniform())
     l_date_hid1_drop = lasagne.layers.DropoutLayer(l_date_hid1, p=0.5)
     #hidden layer
     l_date_hid2= lasagne.layers.DenseLayer(
-                    l_date_hid1_drop, num_units=800,
+                    l_date_hid1_drop, num_units=50,
                             nonlinearity=lasagne.nonlinearities.rectify)
-    l_date_hid2_drop = lasagne.layers.DropoutLayer(l_date_hid2, p=0.5)
+    l_date_out = lasagne.layers.DropoutLayer(l_date_hid2, p=0.5)
 
 
     #concatenating the layers of both geographic and time information: (l_geo_hid2_drop, l_date_hid2_drop) = l_tot_in
-    l_tot_in = lasagne.layers.concat([l_geo_tot_hid_1_drop, l_date_hid2_drop], axis=1)
+    l_tot_in = lasagne.layers.concat([l_geo_tot_out, l_date_out], axis=1)
     l_tot_in_drop = lasagne.layers.DropoutLayer(l_tot_in, p=0.2)
 
     #adding some layers for distributed representations: l_tot_in > l_common_hid2_drop
     l_common_in = lasagne.layers.DenseLayer(
-                    l_tot_in_drop, num_units=800*2,
+                    l_tot_in_drop, num_units=50*2,
                             nonlinearity=lasagne.nonlinearities.rectify)
     l_common_in_drop = lasagne.layers.DropoutLayer(l_common_in, p=0.2)
     #hidden layer
     l_common_hid1 = lasagne.layers.DenseLayer(
-                    l_common_in_drop, num_units=800,
+                    l_common_in_drop, num_units=70,
                             nonlinearity=lasagne.nonlinearities.rectify,
                                     W=lasagne.init.GlorotUniform())
     l_common_hid1_drop = lasagne.layers.DropoutLayer(l_common_hid1, p=0.5)
     #hidden layer
     l_common_hid2= lasagne.layers.DenseLayer(
-                    l_common_hid1_drop, num_units=800,
+                    l_common_hid1_drop, num_units=100,
                             nonlinearity=lasagne.nonlinearities.rectify)
     l_common_hid2_drop = lasagne.layers.DropoutLayer(l_common_hid2, p=0.5)
 
@@ -232,7 +244,8 @@ def main():
         train_batches = 0
         start_time = time.time()
         for batch in iterate_minibatches(X_train, y_train, 500, shuffle=True):
-            print('.')
+            #faire une barre de chargement
+            print '.',
             inputs, targets = batch
             train_err += train_fn(inputs, targets)
             train_batches += 1
@@ -240,6 +253,7 @@ def main():
             val_err = 0
             val_acc = 0
             val_batches = 0
+        print '.'
         for batch in iterate_minibatches(X_val, y_val, 500, shuffle=False):
             inputs, targets = batch
             err, acc = val_fn(inputs, targets)
@@ -247,11 +261,19 @@ def main():
             val_acc += acc
             val_batches += 1
 
-            # Then we print the results for this epoch:
-            print("Epoch {} of {} took {:.3f}s".format(
-            epoch + 1, num_epochs, time.time() - start_time))
-            print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
-            print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
-            print("  validation accuracy:\t\t{:.2f} %".format(
-                val_acc / val_batches * 100))
+#            # Then we print the results for this epoch:
+#            print("Epoch {} of {} took {:.3f}s".format(
+#            epoch + 1, num_epochs, time.time() - start_time))
+#            print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
+#            print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
+#            print("  validation accuracy:\t\t{:.2f} %".format(
+#                val_acc / val_batches * 100))
+
+        # Then we print the results for this epoch:
+        print("Epoch {} of {} took {:.3f}s".format(
+        epoch + 1, num_epochs, time.time() - start_time))
+        print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
+        print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
+        print("  validation accuracy:\t\t{:.2f} %".format(
+            val_acc / val_batches * 100))
 
