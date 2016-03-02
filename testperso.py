@@ -139,7 +139,7 @@ def build_mlp(input_var = None):
 
     #build the distributed representation for the geography: l_out_geo
     l_geo_tot_hid1 = lasagne.layers.DenseLayer(
-                    l_geo_tot_in_drop, num_units=800,
+                    l_geo_tot_out, num_units=800,
                             nonlinearity=lasagne.nonlinearities.rectify)
     l_geo_tot_hid_1_drop = lasagne.layers.DropoutLayer(l_geo_tot_hid1, p=0.5)
     l_geo_tot_hid2 = lasagne.layers.DenseLayer(
