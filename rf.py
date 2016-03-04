@@ -51,14 +51,3 @@ del(latitudes)
 del(district)
 print('Objects deleted')
 execfile('fit.py')
-
-
-
-
-
-
-
-
-
-
-
