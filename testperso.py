@@ -1,3 +1,4 @@
+import cPickle
 import theano
 import theano.tensor as T
 import lasagne
@@ -19,71 +20,116 @@ num_epochs = 100
 #TODO : faire aussi un truc qui met les categories au bon format
 
 
-def load_dataset():
-    #import some points of the dataset
-    print('Loading dataset...')
-    df = pd.read_csv('../data/train.csv')
-    print('Dataset loaded.')
-    #convert the date into more precise inputs: 
-    print('Converting...')
-    month = oh.take_elems(df['Dates'],5,7)
-    print('Month OK.')
-    day= oh.take_elems(df['Dates'],8,10)
-    print('Day OK.')
-    year= oh.take_elems(df['Dates'],0,4)
-    print('Year OK.')
-    hour= oh.hm_to_seconds(df['Dates'],11)
-    print('Hour OK.')
-    longitudes = df['X'].as_matrix()
-    print('Longitudes OK.')
-    latitudes = df['Y'].as_matrix()
-    print('Latitudes OK.')
-    weekday = oh.one_hot(df['DayOfWeek']) # ca pourrait etre interessant de voir si on codait sous forme ordinale 
-    print('DayOfWeek one-hot encoding OK.')
-    district = oh.one_hot(df['PdDistrict']) # ca pourrait etre interessant de voir si on codait sous forme ordinale 
-    print('District one-hot encoding OK.')
-    #TODO : see if I add the district with a one hot encoding 
-    #
-    ## extract the label and convert it into numbers
-    print('Transforming categories into indexes...')
-    df['Category'] = pd.Series(df['Category'], dtype = 'category').cat.rename_categories(range(num_classes))
-    y= df['Category'].values
-    print('Categories transformed into indexes.')
+def load_dataset(reload = False):
+    if reload == True:
+        #import some points of the dataset
+        print('Loading dataset...')
+        df = pd.read_csv('../data/train.csv')
+        print('Dataset loaded.')
+        #convert the date into more precise inputs: 
+        print('Converting...')
+        month = oh.take_elems(df['Dates'],5,7)
+        print('Month OK.')
+        day= oh.take_elems(df['Dates'],8,10)
+        print('Day OK.')
+        year= oh.take_elems(df['Dates'],0,4)
+        print('Year OK.')
+        hour= oh.hm_to_seconds(df['Dates'],11)
+        print('Hour OK.')
+        longitudes = df['X'].as_matrix()
+        print('Longitudes OK.')
+        latitudes = df['Y'].as_matrix()
+        print('Latitudes OK.')
+        weekday = oh.one_hot(df['DayOfWeek']) # ca pourrait etre interessant de voir si on codait sous forme ordinale 
+        print('DayOfWeek one-hot encoding OK.')
+        district = oh.one_hot(df['PdDistrict']) # ca pourrait etre interessant de voir si on codait sous forme ordinale 
+        print('District one-hot encoding OK.')
+        #TODO : see if I add the district with a one hot encoding 
+        #
+        ## extract the label and convert it into numbers
+        print('Transforming categories into indexes...')
+        df['Category'] = pd.Series(df['Category'], dtype = 'category').cat.rename_categories(range(num_classes))
+        y= df['Category'].values
+        print('Categories transformed into indexes.')
 
-    print('Creating the input vector...')
-    X = latitudes.reshape(len(latitudes),1) #TODO : verifier que c est bien la bonne shape avec ipython
-    print('Latitudes appended.')
-    X = np.append(X, longitudes.reshape(len(longitudes),1), axis=1)
-    print('Longitudes appended.')
-    X = np.append(X,   month.reshape(len(month),1), axis=1)
-    print('Month appended.')
-    X = np.append(X,   day.reshape(len(day),1), axis=1)
-    print('Day appended.')
-    X = np.append(X,   year.reshape(len(year),1), axis=1)
-    print('Year appended.')
-    X = np.append(X,   hour.reshape(len(hour),1), axis=1)
-    print('Hour appended.')
-    X = np.append(X,   weekday, axis = 1)
-    print('DayOfWeek appended.')
-    X = np.append(X,   district, axis =1 )
-    print('Disctrict appended.')
+        print('Creating the input vector...')
+        X = latitudes.reshape(len(latitudes),1) #TODO : verifier que c est bien la bonne shape avec ipython
+        print('Latitudes appended.')
+        X = np.append(X, longitudes.reshape(len(longitudes),1), axis=1)
+        print('Longitudes appended.')
+        X = np.append(X,   month.reshape(len(month),1), axis=1)
+        print('Month appended.')
+        X = np.append(X,   day.reshape(len(day),1), axis=1)
+        print('Day appended.')
+        X = np.append(X,   year.reshape(len(year),1), axis=1)
+        print('Year appended.')
+        X = np.append(X,   hour.reshape(len(hour),1), axis=1)
+        print('Hour appended.')
+        X = np.append(X,   weekday, axis = 1)
+        print('DayOfWeek appended.')
+        X = np.append(X,   district, axis =1 )
+        print('Disctrict appended.')
 
-    print('Shuffling...')
-    idx = np.arange(X.shape[0])
-    np.random.shuffle(idx)
-    # TODO : mettre les bons indices pour les inputs dans les couches
-    X_current = X[idx] 
-    y_current = y[idx] 
+        print('Shuffling...')
+        idx = np.arange(X.shape[0])
+        np.random.shuffle(idx)
+        # TODO : mettre les bons indices pour les inputs dans les couches
+        X_current = X[idx] 
+        y_current = y[idx] 
 
-    print('Shuffled.')
+        print('Shuffled.')
 
-    print('Dividing into training and test set...')
-    X_train,X_val = X_current[:0.8*len(X_current)], X_current[0.8*len(X_current):len(X_current)]
-    y_train,y_val = y_current[:0.8*len(y_current)], y_current[0.8*len(y_current):len(y_current)]
-    print('Done.')
+        print('Dividing into training and test set...')
+        X_train,X_val = X_current[:0.8*len(X_current)], X_current[0.8*len(X_current):len(X_current)]
+        y_train,y_val = y_current[:0.8*len(y_current)], y_current[0.8*len(y_current):len(y_current)]
+        print('Done.')
+
+       # f = open('data.save', 'wb')
+       # for obj in [X_train, y_train, X_val, y_val]:
+       #     cPickle.dump(obj, f, protocol=cPickle.HIGHEST_PROTOCOL)
+       # f.close()
+
+        print('Saving dataset...')
+        f = open('X_train.save', 'wb')
+        cPickle.dump(X_train, f, protocol=cPickle.HIGHEST_PROTOCOL)
+        f.close()
+        f = open('y_train.save', 'wb')
+        cPickle.dump(y_train, f, protocol=cPickle.HIGHEST_PROTOCOL)
+        f.close()
+        f = open('X_val.save', 'wb')
+        cPickle.dump(X_val, f, protocol=cPickle.HIGHEST_PROTOCOL)
+        f.close()
+        f = open('y_val.save', 'wb')
+        cPickle.dump(y_val, f, protocol=cPickle.HIGHEST_PROTOCOL)
+        f.close()
+        print('Dataset saved.')
+    else : 
+        #f = open('data.save', 'r')
+        #loaded_objects = []
+        #for i in range(4):
+        #    loaded_objects.append(cPickle.load(f))
+        #f.close()
+        print('Loading dataset...')
+        f = open('X_train.save', 'rb')
+        X_train = cPickle.load(f)
+        f.close()
+        f = open('y_train.save', 'rb')
+        y_train = cPickle.load(f)
+        f.close()
+        f = open('X_val.save', 'rb')
+        X_val = cPickle.load(f)
+        f.close()
+        f = open('y_val.save', 'rb')
+        y_val= cPickle.load(f)
+        f.close()
+        print('Dataset loaded.')
+        #X_train, y_train, X_val, y_val = loaded_objects
+
     return  X_train, y_train, X_val, y_val
 
+
 def build_mlp(input_var = None): 
+    print('Building model...')
     #define the inputs of the different perceptrons
     #input_geo = input_var[0:1] # input_geo: uniquement la latitude et la longitude
     #input_geo_district = input_var[9:12]
@@ -91,31 +137,31 @@ def build_mlp(input_var = None):
     l_in= lasagne.layers.InputLayer(shape = (None,13), input_var = input_var)
     ##build the network connected to the geography input_geo > l_geo_hid2_drop
     #input layer
-    l_geo_in = lasagne.layers.SliceLayer(l_in, indices=slice(0, 1))
+    l_geo_in = lasagne.layers.SliceLayer(l_in, indices=slice(0, 1), axis=1)
     #l_geo_in = lasagne.layers.InputLayer(shape = input_geo.shape, input_var = input_geo)
     #l_geo_in_drop = lasagne.layers.DropoutLayer(l_geo_in, p=0.2)
     l_geo_in_drop = l_geo_in
     #hidden layer
     l_geo_hid1 = lasagne.layers.DenseLayer(
-                    l_geo_in_drop, num_units=900,
-                            nonlinearity=lasagne.nonlinearities.rectify,
-                                    W=lasagne.init.GlorotUniform())
+            l_geo_in_drop, num_units=900,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.GlorotUniform())
     l_geo_hid1_drop = lasagne.layers.DropoutLayer(l_geo_hid1, p=0.5)
     #hidden layer
     l_geo_hid2= lasagne.layers.DenseLayer(
-                    l_geo_hid1_drop, num_units=900,
-                            nonlinearity=lasagne.nonlinearities.rectify)
+            l_geo_hid1_drop, num_units=900,
+            nonlinearity=lasagne.nonlinearities.rectify)
     l_geo_hid2_drop = lasagne.layers.DropoutLayer(l_geo_hid2, p=0.5)
 
     l_geo_hid3= lasagne.layers.DenseLayer(
-                    l_geo_hid2_drop, num_units=900,
-                            nonlinearity=lasagne.nonlinearities.rectify)
+            l_geo_hid2_drop, num_units=900,
+            nonlinearity=lasagne.nonlinearities.rectify)
     l_out_geo = lasagne.layers.DropoutLayer(l_geo_hid3, p=0.5)
 
     ##building the network for the district input_geo_district > l_geo_district_hid_2_drop
     #input layer
     #input_geo_district = lasagne.layers.SliceLayer(l_in, indices=slice(9,12))
-    output_geo_district = lasagne.layers.SliceLayer(l_in, indices=slice(9,12))
+    output_geo_district = lasagne.layers.SliceLayer(l_in, indices=slice(9,12), axis=1)
     #l_geo_district_in = lasagne.layers.InputLayer(shape =  input_geo_district.shape, input_var = input_geo_district)
     #l_geo_district_in_drop = lasagne.layers.DropoutLayer(l_geo_district_in, p=0.2)
     #hidden layer
@@ -139,29 +185,29 @@ def build_mlp(input_var = None):
 
     #build the distributed representation for the geography: l_out_geo
     l_geo_tot_hid1 = lasagne.layers.DenseLayer(
-                    l_geo_tot_out, num_units=800,
-                            nonlinearity=lasagne.nonlinearities.rectify)
+            l_geo_tot_out, num_units=800,
+            nonlinearity=lasagne.nonlinearities.rectify)
     l_geo_tot_hid_1_drop = lasagne.layers.DropoutLayer(l_geo_tot_hid1, p=0.5)
     l_geo_tot_hid2 = lasagne.layers.DenseLayer(
-                    l_geo_tot_hid_1_drop, num_units=800,
-                            nonlinearity=lasagne.nonlinearities.rectify)
+            l_geo_tot_hid_1_drop, num_units=800,
+            nonlinearity=lasagne.nonlinearities.rectify)
     l_geo_tot_out = lasagne.layers.DropoutLayer(l_geo_tot_hid2, p=0.5)
 
 
     #TODO : attention j ai ecrit exactement la meme chose ici
     #build the network connected to the date: l_date_in > l_date_hid2_drop
-    l_date_in = lasagne.layers.SliceLayer(l_in, indices=slice(2,8))
+    l_date_in = lasagne.layers.SliceLayer(l_in, indices=slice(2,8), axis=1)
     #l_date_in_drop = lasagne.layers.DropoutLayer(l_date_in, p=0.2)
     #hidden layer
     l_date_hid1 = lasagne.layers.DenseLayer(
-                    l_date_in, num_units=50,
-                            nonlinearity=lasagne.nonlinearities.rectify,
-                                    W=lasagne.init.GlorotUniform())
+            l_date_in, num_units=50,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.GlorotUniform())
     l_date_hid1_drop = lasagne.layers.DropoutLayer(l_date_hid1, p=0.5)
     #hidden layer
     l_date_hid2= lasagne.layers.DenseLayer(
-                    l_date_hid1_drop, num_units=50,
-                            nonlinearity=lasagne.nonlinearities.rectify)
+            l_date_hid1_drop, num_units=50,
+            nonlinearity=lasagne.nonlinearities.rectify)
     l_date_out = lasagne.layers.DropoutLayer(l_date_hid2, p=0.5)
 
 
@@ -171,25 +217,26 @@ def build_mlp(input_var = None):
 
     #adding some layers for distributed representations: l_tot_in > l_common_hid2_drop
     l_common_in = lasagne.layers.DenseLayer(
-                    l_tot_in_drop, num_units=50*2,
-                            nonlinearity=lasagne.nonlinearities.rectify)
+            l_tot_in_drop, num_units=50*2,
+            nonlinearity=lasagne.nonlinearities.rectify)
     l_common_in_drop = lasagne.layers.DropoutLayer(l_common_in, p=0.2)
     #hidden layer
     l_common_hid1 = lasagne.layers.DenseLayer(
-                    l_common_in_drop, num_units=70,
-                            nonlinearity=lasagne.nonlinearities.rectify,
-                                    W=lasagne.init.GlorotUniform())
+            l_common_in_drop, num_units=70,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.GlorotUniform())
     l_common_hid1_drop = lasagne.layers.DropoutLayer(l_common_hid1, p=0.5)
     #hidden layer
     l_common_hid2= lasagne.layers.DenseLayer(
-                    l_common_hid1_drop, num_units=100,
-                            nonlinearity=lasagne.nonlinearities.rectify)
+            l_common_hid1_drop, num_units=100,
+            nonlinearity=lasagne.nonlinearities.rectify)
     l_common_hid2_drop = lasagne.layers.DropoutLayer(l_common_hid2, p=0.5)
 
     #build the final layer: l_common_hid2drop > l_out: size: the number of classes (because one-hot encoding) 
     l_out = lasagne.layers.DenseLayer(
-                    l_common_hid2_drop, num_units=num_classes,
-                                nonlinearity=lasagne.nonlinearities.softmax)
+            l_common_hid2_drop, num_units=num_classes,
+            nonlinearity=lasagne.nonlinearities.softmax)
+    print('Model built.')
     return l_out
 
 def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
@@ -209,7 +256,7 @@ def main():
     #X_train, y_train, X_val, y_val, X_test, y_test = load_dataset()
     X_train, y_train, X_val, y_val= load_dataset()
     # Prepare Theano variables for inputs and targets
-    input_var = T.matrix('inputs')
+    input_var = T.fmatrix('inputs')
     target_var = T.ivector('targets')
     # Create neural network model
     network = build_mlp(input_var)
@@ -235,17 +282,18 @@ def main():
 
     val_fn = theano.function([input_var, target_var], [test_loss, test_acc], allow_input_downcast=True)
 
-
-    print('Test')
     for epoch in range(num_epochs):
-        print('Test')
         # In each epoch, we do a full pass over the training data:
         train_err = 0
         train_batches = 0
         start_time = time.time()
-        for batch in iterate_minibatches(X_train, y_train, 500, shuffle=True):
+        print 'Training:'
+        idxloc = 0;
+        for  batch in iterate_minibatches(X_train, y_train, 500, shuffle=True):
             #faire une barre de chargement
-            print '.',
+            idxloc += 1;
+            if(idxloc%(len(X_train)/500/10)==0):
+                print idxloc/(len(X_train)/500)*100, '%'
             inputs, targets = batch
             train_err += train_fn(inputs, targets)
             train_batches += 1
@@ -253,8 +301,12 @@ def main():
             val_err = 0
             val_acc = 0
             val_batches = 0
-        print '.'
+        print('Testing:')
+        idxloc = 0;
         for batch in iterate_minibatches(X_val, y_val, 500, shuffle=False):
+            idxloc += 1;
+            if(idxloc%(len(X_val)/batchsize/10)==0):
+                print idxloc/(len(X_val)/batchsize)*100, '%'
             inputs, targets = batch
             err, acc = val_fn(inputs, targets)
             val_err += err
@@ -271,7 +323,7 @@ def main():
 
         # Then we print the results for this epoch:
         print("Epoch {} of {} took {:.3f}s".format(
-        epoch + 1, num_epochs, time.time() - start_time))
+            epoch + 1, num_epochs, time.time() - start_time))
         print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
         print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
         print("  validation accuracy:\t\t{:.2f} %".format(
