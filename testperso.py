@@ -134,7 +134,7 @@ def build_mlp(input_var = None):
     #input_geo = input_var[0:1] # input_geo: uniquement la latitude et la longitude
     #input_geo_district = input_var[9:12]
     #input_date = input_var[2:8]
-    l_in= lasagne.layers.InputLayer(shape = (None,13), input_var = input_var)
+    l_in= lasagne.layers.InputLayer(shape = (None,23), input_var = input_var)
     ##build the network connected to the geography input_geo > l_geo_hid2_drop
     #input layer
     l_geo_in = lasagne.layers.SliceLayer(l_in, indices=slice(0, 1), axis=1)
