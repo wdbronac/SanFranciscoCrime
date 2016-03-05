@@ -12,7 +12,7 @@ import pandas as pd
 
 
 #defining the parameters of the training
-batch_size = 500
+batch_size = 10000
 num_classes =39 
 size_one_hot_district = 4
 num_epochs = 100
@@ -292,11 +292,11 @@ def main():
         start_time = time.time()
         print 'Training:'
         idxloc = 0;
-        for  batch in iterate_minibatches(X_train, y_train, 500, shuffle=True):
+        for  batch in iterate_minibatches(X_train, y_train, batch_size, shuffle=True):
             #faire une barre de chargement
             idxloc += 1;
-            if(idxloc%(len(X_train)/500/10)==0):
-                print idxloc*100/(len(X_train)/500), '%'
+            if(idxloc%(len(X_train)/batch_size/10)==0):
+                print idxloc*100/(len(X_train)/batch_size), '%'
             inputs, targets = batch
             train_err += train_fn(inputs, targets)
             train_batches += 1
@@ -306,7 +306,7 @@ def main():
         val_batches = 0
         print('Testing:')
         idxloc = 0;
-        for batch in iterate_minibatches(X_val, y_val, 500, shuffle=False):
+        for batch in iterate_minibatches(X_val, y_val, batch_size, shuffle=False):
             idxloc += 1;
             if(idxloc%(len(X_val)/batch_size/10)==0):
                 print idxloc*100/(len(X_val)/batch_size), '%'
