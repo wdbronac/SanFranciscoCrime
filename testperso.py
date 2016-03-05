@@ -360,7 +360,29 @@ def main():
 	predict_function = theano.function([input_var], prediction,allow_input_downcast=True )
 
 	X_test = load_dataset(  test = True)	
+        pred = np.array([], dtype = float32
 	#result =  predict_function(X_test)
 	#df_final = pd.DataFrame(result, columns=["Id", classes])
 	#df_final.to_csv('../data/finalSubmission2.csv')  
-	return predict_function, X_test
+        del(X_train)
+        del(X_val)
+        del(y_train)
+        del(y_test)
+        with open('submit.csv', 'wb') as csvfile:
+            writer = csv.writer(csvfile, delimiter = ',')
+            writer.writerow=(["Id", classes])
+        pred = np.empty((0,39))
+        memsize = 10000
+        for start_idx in range(0, len(X_test) - memsize + 1, memsize):
+            prediction = predict_function(X_test[start_idx:start_idx+memsize]
+            with open('submit.csv', 'wb') as csvfile:
+                writer = csv.writer(csvfile, delimiter = ',')
+                for row_current in prediction: 
+                    writer.writerow=(row_current)
+        prediction = predict_function(X[len(X_test) - memsize:])
+        with open('submit.csv', 'wb') as csvfile:
+            writer = csv.writer(csvfile, delimiter = ',')
+            for row_current in prediction: 
+                writer.writerow=(row_current)
+
+	#return predict_function, X_test, prediction
