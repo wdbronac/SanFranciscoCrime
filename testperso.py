@@ -12,7 +12,7 @@ import pandas as pd
 
 
 #defining the parameters of the training
-batch_size = 50000
+batch_size = 100
 num_classes =39 
 size_one_hot_district = 4
 num_epochs = 1
@@ -358,15 +358,9 @@ def main():
 
 	prediction = lasagne.layers.get_output(network, deterministic=True)
 	predict_function = theano.function([input_var], prediction,allow_input_downcast=True )
-	#deleting objects: 
-	del(X_train)
-	del(y_train)
-	del(X_val)
-	del(y_val)
-
-
 
 	X_test = load_dataset(  test = True)	
-	result =  predict_function(X_test)
-	df_final = pd.DataFrame(result, columns=["Id", classes])
-	df_final.to_csv('../data/finalSubmission2.csv')  
+	#result =  predict_function(X_test)
+	#df_final = pd.DataFrame(result, columns=["Id", classes])
+	#df_final.to_csv('../data/finalSubmission2.csv')  
+	return predict_function, X_test
