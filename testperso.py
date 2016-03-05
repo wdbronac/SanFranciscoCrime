@@ -293,7 +293,7 @@ def main():
             #faire une barre de chargement
             idxloc += 1;
             if(idxloc%(len(X_train)/500/10)==0):
-                print idxloc/(len(X_train)/500)*100, '%'
+                print idxloc*100/(len(X_train)/500), '%'
             inputs, targets = batch
             train_err += train_fn(inputs, targets)
             train_batches += 1
@@ -306,7 +306,7 @@ def main():
         for batch in iterate_minibatches(X_val, y_val, 500, shuffle=False):
             idxloc += 1;
             if(idxloc%(len(X_val)/batch_size/10)==0):
-                print idxloc/(len(X_val)/batch_size)*100, '%'
+                print idxloc*100/(len(X_val)/batch_size), '%'
             inputs, targets = batch
             err, acc = val_fn(inputs, targets)
             val_err += err
