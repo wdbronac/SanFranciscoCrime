@@ -77,6 +77,9 @@ def load_dataset(reload = False):
         X_current = X[idx] 
         y_current = y[idx] 
 
+        #converting y into nparray
+        y_current = np.array(y_current)
+
         print('Shuffled.')
 
         print('Dividing into training and test set...')
@@ -298,9 +301,9 @@ def main():
             train_err += train_fn(inputs, targets)
             train_batches += 1
             # And a full pass over the validation data:
-            val_err = 0
-            val_acc = 0
-            val_batches = 0
+        val_err = 0
+        val_acc = 0
+        val_batches = 0
         print('Testing:')
         idxloc = 0;
         for batch in iterate_minibatches(X_val, y_val, 500, shuffle=False):
