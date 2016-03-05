@@ -12,21 +12,24 @@ import pandas as pd
 
 
 #defining the parameters of the training
-batch_size = 10000
+batch_size = 50000
 num_classes =39 
 size_one_hot_district = 4
-num_epochs = 100
+num_epochs = 1
 #TODO : definir un truc clean pour les inputs genre un truc qui fait bien des inputs, mais qui ne prend que la premiere partie et la met dans geo etc
 #TODO : faire aussi un truc qui met les categories au bon format
 
 
-def load_dataset(reload = False):
+def load_dataset( reload = False, test = False):
+    if test == True: 
+	filename = '../data/test.csv'
+    else:
+	filename = '../data/train.csv'
+
     if reload == True:
         #import some points of the dataset
         print('Loading dataset...')
-        df = pd.read_csv('../data/train.csv')
-        print('Dataset loaded.')
-        #convert the date into more precise inputs: 
+        df = pd.read_csv(filename)#convert the date into more precise inputs: 
         print('Converting...')
         month = oh.take_elems(df['Dates'],5,7)
         print('Month OK.')
@@ -48,11 +51,12 @@ def load_dataset(reload = False):
         #
         ## extract the label and convert it into numbers
         print('Transforming categories into indexes...')
-        df['Category'] = pd.Series(df['Category'], dtype = 'category').cat.rename_categories(range(num_classes))
-        y= df['Category'].values
-        print('Categories transformed into indexes.')
-
-        print('Creating the input vector...')
+	if test == False: 
+		df['Category'] = pd.Series(df['Category'], dtype = 'category').cat.rename_categories(range(num_classes))
+		y= df['Category'].values
+		print('Categories transformed into indexes.')
+		classes = pd.Series(df['Category'], dtype = 'category').cat.categories    
+	print('Creating the input vector...')
         X = latitudes.reshape(len(latitudes),1) #TODO : verifier que c est bien la bonne shape avec ipython
         print('Latitudes appended.')
         X = np.append(X, longitudes.reshape(len(longitudes),1), axis=1)
@@ -69,66 +73,86 @@ def load_dataset(reload = False):
         print('DayOfWeek appended.')
         X = np.append(X,   district, axis =1 )
         print('Disctrict appended.')
+	if test == True: 
+		print('Saving dataset...')
+		f = open('X_test.save', 'wb')
+		cPickle.dump(X, f, protocol=cPickle.HIGHEST_PROTOCOL)
+		f.close()
+		return X
+        else: 
+		print('Shuffling...')
+		idx = np.arange(X.shape[0])
+		np.random.shuffle(idx)
+		# TODO : mettre les bons indices pour les inputs dans les couches
+		X_current = X[idx] 
+		y_current = y[idx] 
 
-        print('Shuffling...')
-        idx = np.arange(X.shape[0])
-        np.random.shuffle(idx)
-        # TODO : mettre les bons indices pour les inputs dans les couches
-        X_current = X[idx] 
-        y_current = y[idx] 
+		#converting y into nparray
+		y_current = np.array(y_current)
 
-        #converting y into nparray
-        y_current = np.array(y_current)
+		print('Shuffled.')
 
-        print('Shuffled.')
-
-        print('Dividing into training and test set...')
-        X_train,X_val = X_current[:0.8*len(X_current)], X_current[0.8*len(X_current):len(X_current)]
-        y_train,y_val = y_current[:0.8*len(y_current)], y_current[0.8*len(y_current):len(y_current)]
-        print('Done.')
+		print('Dividing into training and test set...')
+		X_train,X_val = X_current[:0.8*len(X_current)], X_current[0.8*len(X_current):len(X_current)]
+		y_train,y_val = y_current[:0.8*len(y_current)], y_current[0.8*len(y_current):len(y_current)]
+		print('Done.')
 
        # f = open('data.save', 'wb')
        # for obj in [X_train, y_train, X_val, y_val]:
        #     cPickle.dump(obj, f, protocol=cPickle.HIGHEST_PROTOCOL)
        # f.close()
 
-        print('Saving dataset...')
-        f = open('X_train.save', 'wb')
-        cPickle.dump(X_train, f, protocol=cPickle.HIGHEST_PROTOCOL)
-        f.close()
-        f = open('y_train.save', 'wb')
-        cPickle.dump(y_train, f, protocol=cPickle.HIGHEST_PROTOCOL)
-        f.close()
-        f = open('X_val.save', 'wb')
-        cPickle.dump(X_val, f, protocol=cPickle.HIGHEST_PROTOCOL)
-        f.close()
-        f = open('y_val.save', 'wb')
-        cPickle.dump(y_val, f, protocol=cPickle.HIGHEST_PROTOCOL)
-        f.close()
-        print('Dataset saved.')
+		print('Saving dataset...')
+		f = open('X_train.save', 'wb')
+		cPickle.dump(X_train, f, protocol=cPickle.HIGHEST_PROTOCOL)
+		f.close()
+		f = open('y_train.save', 'wb')
+		cPickle.dump(y_train, f, protocol=cPickle.HIGHEST_PROTOCOL)
+		f.close()
+		f = open('X_val.save', 'wb')
+		cPickle.dump(X_val, f, protocol=cPickle.HIGHEST_PROTOCOL)
+		f.close()
+		f = open('y_val.save', 'wb')
+		cPickle.dump(y_val, f, protocol=cPickle.HIGHEST_PROTOCOL)
+		f.close()
+		f = open('classes.save', 'wb')
+		cPickle.dump(classes, f, protocol=cPickle.HIGHEST_PROTOCOL)
+		f.close()
+		print('Dataset saved.')
+		return  X_train, y_train, X_val, y_val, classes
     else : 
         #f = open('data.save', 'r')
         #loaded_objects = []
         #for i in range(4):
         #    loaded_objects.append(cPickle.load(f))
         #f.close()
-        print('Loading dataset...')
-        f = open('X_train.save', 'rb')
-        X_train = cPickle.load(f)
-        f.close()
-        f = open('y_train.save', 'rb')
-        y_train = cPickle.load(f)
-        f.close()
-        f = open('X_val.save', 'rb')
-        X_val = cPickle.load(f)
-        f.close()
-        f = open('y_val.save', 'rb')
-        y_val= cPickle.load(f)
-        f.close()
-        print('Dataset loaded.')
+	if test == True: 
+		print('Loading dataset...')
+		f = open('X_test.save', 'rb')
+		X_test = cPickle.load(f)
+		f.close()
+		return X_test
+	else:
+		print('Loading dataset...')
+		f = open('X_train.save', 'rb')
+		X_train = cPickle.load(f)
+		f.close()
+		f = open('y_train.save', 'rb')
+		y_train = cPickle.load(f)
+		f.close()
+		f = open('X_val.save', 'rb')
+		X_val = cPickle.load(f)
+		f.close()
+		f = open('y_val.save', 'rb')
+		y_val= cPickle.load(f)
+		f.close()
+		f = open('classes.save', 'rb')
+		classes= cPickle.load(f)
+		f.close()
+		print('Dataset loaded.')
         #X_train, y_train, X_val, y_val = loaded_objects
-
-    return  X_train, y_train, X_val, y_val
+		return  X_train, y_train, X_val, y_val, classes
+    return 0
 
 
 def build_mlp(input_var = None): 
@@ -257,7 +281,7 @@ def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
 def main():
     # Load the dataset
     #X_train, y_train, X_val, y_val, X_test, y_test = load_dataset()
-    X_train, y_train, X_val, y_val= load_dataset()
+    X_train, y_train, X_val, y_val, classes= load_dataset()
     # Prepare Theano variables for inputs and targets
     input_var = T.fmatrix('inputs')
     target_var = T.ivector('targets')
@@ -295,8 +319,8 @@ def main():
         for  batch in iterate_minibatches(X_train, y_train, batch_size, shuffle=True):
             #faire une barre de chargement
             idxloc += 1;
-            if(idxloc%(len(X_train)/batch_size/10)==0):
-                print idxloc*100/(len(X_train)/batch_size), '%'
+            #if(idxloc%(len(X_train)/batch_size/10)==0):
+            #    print idxloc*100/(len(X_train)/batch_size), '%'
             inputs, targets = batch
             train_err += train_fn(inputs, targets)
             train_batches += 1
@@ -308,8 +332,8 @@ def main():
         idxloc = 0;
         for batch in iterate_minibatches(X_val, y_val, batch_size, shuffle=False):
             idxloc += 1;
-            if(idxloc%(len(X_val)/batch_size/10)==0):
-                print idxloc*100/(len(X_val)/batch_size), '%'
+            #if(idxloc%(len(X_val)/batch_size/10)==0):
+            #    print idxloc*100/(len(X_val)/batch_size), '%'
             inputs, targets = batch
             err, acc = val_fn(inputs, targets)
             val_err += err
@@ -332,3 +356,17 @@ def main():
         print("  validation accuracy:\t\t{:.2f} %".format(
             val_acc / val_batches * 100))
 
+	prediction = lasagne.layers.get_output(network, deterministic=True)
+	predict_function = theano.function([input_var], prediction,allow_input_downcast=True )
+	#deleting objects: 
+	del(X_train)
+	del(y_train)
+	del(X_val)
+	del(y_val)
+
+
+
+	X_test = load_dataset(  test = True)	
+	result =  predict_function(X_test)
+	df_final = pd.DataFrame(result, columns=["Id", classes])
+	df_final.to_csv('../data/finalSubmission2.csv')  
