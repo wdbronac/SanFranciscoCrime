@@ -305,8 +305,8 @@ def main():
         idxloc = 0;
         for batch in iterate_minibatches(X_val, y_val, 500, shuffle=False):
             idxloc += 1;
-            if(idxloc%(len(X_val)/batchsize/10)==0):
-                print idxloc/(len(X_val)/batchsize)*100, '%'
+            if(idxloc%(len(X_val)/batch_size/10)==0):
+                print idxloc/(len(X_val)/batch_size)*100, '%'
             inputs, targets = batch
             err, acc = val_fn(inputs, targets)
             val_err += err
