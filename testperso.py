@@ -161,7 +161,7 @@ def build_mlp(input_var = None):
     ##building the network for the district input_geo_district > l_geo_district_hid_2_drop
     #input layer
     #input_geo_district = lasagne.layers.SliceLayer(l_in, indices=slice(9,12))
-    output_geo_district = lasagne.layers.SliceLayer(l_in, indices=slice(9,12), axis=1)
+    output_geo_district = lasagne.layers.SliceLayer(l_in, indices=slice(12,22), axis=1)
     #l_geo_district_in = lasagne.layers.InputLayer(shape =  input_geo_district.shape, input_var = input_geo_district)
     #l_geo_district_in_drop = lasagne.layers.DropoutLayer(l_geo_district_in, p=0.2)
     #hidden layer
@@ -196,7 +196,7 @@ def build_mlp(input_var = None):
 
     #TODO : attention j ai ecrit exactement la meme chose ici
     #build the network connected to the date: l_date_in > l_date_hid2_drop
-    l_date_in = lasagne.layers.SliceLayer(l_in, indices=slice(2,8), axis=1)
+    l_date_in = lasagne.layers.SliceLayer(l_in, indices=slice(2,12), axis=1)
     #l_date_in_drop = lasagne.layers.DropoutLayer(l_date_in, p=0.2)
     #hidden layer
     l_date_hid1 = lasagne.layers.DenseLayer(
