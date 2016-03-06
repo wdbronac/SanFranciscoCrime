@@ -386,13 +386,20 @@ def main(debug = False):
     pred = np.empty((0,39))
     memsize = 100000
     print('Writing the data...')
+    index = 0
     for start_idx in range(0, len(X_test) - memsize + 1, memsize):
         prediction = predict_function(X_test[start_idx:start_idx+memsize])
         for row_current in prediction: 
-            writer.writerow(row_current)
+            writer.writerow(np.append(index, row_current))
+            index +=1;
+            #if index*100%(len(X_test))==0:
+                #print index*100/(len(X_test)), '%'
     prediction = predict_function(X_test[-(len(X_test)%memsize):])
     for row_current in prediction: 
-        writer.writerow(row_current)
+        writer.writerow(np.append(index, row_current))
+        index +=1;
+        #if index%(len(X_test))==0:
+            #print index*100/(len(X_test)), '%'
     del(prediction)
     file.close()
     print('Data written.')
