@@ -15,7 +15,7 @@ import pandas as pd
 batch_size =100000
 num_classes =39 
 size_one_hot_district = 4
-num_epochs = 6
+num_epochs = 100
 #TODO : definir un truc clean pour les inputs genre un truc qui fait bien des inputs, mais qui ne prend que la premiere partie et la met dans geo etc
 #TODO : faire aussi un truc qui met les categories au bon format
 
@@ -186,7 +186,7 @@ def load_dataset( reload = False, test = False):
     return 0
 
 
-def build_mlp(input_var = None): 
+def build_custom(input_var = None): 
     print('Building model...')
     #define the inputs of the different perceptrons
     #input_geo = input_var[0:1] # input_geo: uniquement la latitude et la longitude
@@ -201,18 +201,18 @@ def build_mlp(input_var = None):
     l_geo_in_drop = l_geo_in
     #hidden layer
     l_geo_hid1 = lasagne.layers.DenseLayer(
-            l_geo_in_drop, num_units=900,
+            l_geo_in_drop, num_units=90,
             nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.GlorotUniform())
     l_geo_hid1_drop = lasagne.layers.DropoutLayer(l_geo_hid1, p=0.5)
     #hidden layer
     l_geo_hid2= lasagne.layers.DenseLayer(
-            l_geo_hid1_drop, num_units=900,
+            l_geo_hid1_drop, num_units=90,
             nonlinearity=lasagne.nonlinearities.rectify)
     l_geo_hid2_drop = lasagne.layers.DropoutLayer(l_geo_hid2, p=0.5)
 
     l_geo_hid3= lasagne.layers.DenseLayer(
-            l_geo_hid2_drop, num_units=900,
+            l_geo_hid2_drop, num_units=90,
             nonlinearity=lasagne.nonlinearities.rectify)
     l_out_geo = lasagne.layers.DropoutLayer(l_geo_hid3, p=0.5)
 
@@ -317,7 +317,7 @@ def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
             excerpt = slice(start_idx, start_idx + batchsize)
         yield inputs[excerpt], targets[excerpt]
 
-def main(debug = False):
+def main(debug = False, custom = True):
     # Load the dataset
     #X_train, y_train, X_val, y_val, X_test, y_test = load_dataset()
     X_train, y_train, X_val, y_val, classes, categories= load_dataset()
@@ -326,15 +326,17 @@ def main(debug = False):
         input_var = T.fmatrix('inputs')
         target_var = T.ivector('targets')
         # Create neural network model
-        network = build_mlp(input_var)
-
+	if custom == False:
+		network = build_mlp(input_var)
+	if custom == True: 
+		network = build_custom(input_var)
         prediction = lasagne.layers.get_output(network)
         loss = lasagne.objectives.categorical_crossentropy(prediction, target_var)
         loss = loss.mean()
 
         params = lasagne.layers.get_all_params(network, trainable=True)
         updates = lasagne.updates.nesterov_momentum(
-                loss, params, learning_rate=0.01, momentum=0.01)
+                loss, params, learning_rate=0.005, momentum=0.9)
 
         test_prediction = lasagne.layers.get_output(network, deterministic=True)
         test_loss = lasagne.objectives.categorical_crossentropy(test_prediction,
