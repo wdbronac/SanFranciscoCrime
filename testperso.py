@@ -12,10 +12,10 @@ import pandas as pd
 
 
 #defining the parameters of the training
-batch_size =5000
+batch_size =100000
 num_classes =39 
 size_one_hot_district = 4
-num_epochs = 10
+num_epochs = 6
 #TODO : definir un truc clean pour les inputs genre un truc qui fait bien des inputs, mais qui ne prend que la premiere partie et la met dans geo etc
 #TODO : faire aussi un truc qui met les categories au bon format
 
@@ -334,7 +334,7 @@ def main(debug = False):
 
         params = lasagne.layers.get_all_params(network, trainable=True)
         updates = lasagne.updates.nesterov_momentum(
-                loss, params, learning_rate=0.01, momentum=0.9)
+                loss, params, learning_rate=0.01, momentum=0.01)
 
         test_prediction = lasagne.layers.get_output(network, deterministic=True)
         test_loss = lasagne.objectives.categorical_crossentropy(test_prediction,
@@ -413,28 +413,24 @@ def main(debug = False):
     del(y_val)
     return predict_function
 
-#file=open("../data/submit.csv", "wb") 
-#writer = csv.writer(file, delimiter = ',')
-#writer.writerow(np.append("Id", categories))
-#pred = np.empty((0,39))
-#memsize = 100000
-#print('Writing the data...')
-#index = 0
-#for start_idx in range(0, len(X_test) - memsize + 1, memsize):
-#prediction = predict_function(X_test[start_idx:start_idx+memsize])
-#for row_current in prediction: 
-#    writer.writerow(np.append(index, row_current))
-#    index +=1;
-#    #if index*100%(len(X_test))==0:
-#	#print index*100/(len(X_test)), '%'
-#prediction = predict_function(X_test[-(len(X_test)%memsize):])
-#for row_current in prediction: 
-#writer.writerow(np.append(index, row_current))
-#index +=1;
-##if index%(len(X_test))==0:
-#    #print index*100/(len(X_test)), '%'
-#del(prediction)
-#file.close()
-#print('Data written.')
+def writedata(predict_function, X_test):
+
+    file=open("../data/submit.csv", "wb") 
+    writer = csv.writer(file, delimiter = ',')
+    writer.writerow(np.append("Id", categories))
+    memsize = 100000
+    print('Writing the data...')
+    index = 0
+    for start_idx in range(0, len(X_test) - memsize + 1, memsize):
+    	prediction = predict_function(X_test[start_idx:start_idx+memsize])
+    	for row_current in prediction: 
+    	    writer.writerow(np.append(index, row_current))
+    	    index +=1;
+    prediction = predict_function(X_test[-(len(X_test)%memsize):])
+    for row_current in prediction: 
+	    writer.writerow(np.append(index, row_current))
+	    index +=1;
+    file.close()
+    print('Data written.')
 
 
