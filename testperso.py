@@ -75,9 +75,16 @@ def load_dataset( reload = False, test = False):
         print('DayOfWeek appended.')
         X = np.append(X,   district, axis =1 )
         print('Disctrict appended.')
+        X_max = X.max(axis=0)
+        if test == False:
+            X = X/X_max
 	if test == True: 
+		f = open('X_max.save', 'rb')
+		X_max= cPickle.load(f)
+		f.close()
 		print('Saving dataset...')
 		f = open('X_test.save', 'wb')
+                X = X/X_max
 		cPickle.dump(X, f, protocol=cPickle.HIGHEST_PROTOCOL)
 		f.close()
 		return X
@@ -123,8 +130,11 @@ def load_dataset( reload = False, test = False):
 		f = open('categories.save', 'wb')
 		cPickle.dump(categories, f, protocol=cPickle.HIGHEST_PROTOCOL)
 		f.close()
+		f = open('X_max.save', 'wb')
+		cPickle.dump(X_max, f, protocol=cPickle.HIGHEST_PROTOCOL)
+		f.close()
 		print('Dataset saved.')
-		return  X_train, y_train, X_val, y_val, classes, categories
+		return  X_train, y_train, X_val, y_val, classes, categories, X_max
     else : 
         #f = open('data.save', 'r')
         #loaded_objects = []
@@ -157,9 +167,12 @@ def load_dataset( reload = False, test = False):
 		f = open('categories.save', 'rb')
 		categories= cPickle.load(f)
 		f.close()
+		f = open('X_max.save', 'rb')
+		X_max= cPickle.load(f)
+		f.close()
 		print('Dataset loaded.')
         #X_train, y_train, X_val, y_val = loaded_objects
-		return  X_train, y_train, X_val, y_val, classes, categories
+		return  X_train, y_train, X_val, y_val, classes, categories, X_max
     return 0
 
 
