@@ -12,10 +12,10 @@ import pandas as pd
 
 
 #defining the parameters of the training
-batch_size = 100
+batch_size = 20000
 num_classes =39 
 size_one_hot_district = 4
-num_epochs = 1
+num_epochs = 60
 #TODO : definir un truc clean pour les inputs genre un truc qui fait bien des inputs, mais qui ne prend que la premiere partie et la met dans geo etc
 #TODO : faire aussi un truc qui met les categories au bon format
 
@@ -30,7 +30,8 @@ def load_dataset( reload = False, test = False):
         #import some points of the dataset
         print('Loading dataset...')
         df = pd.read_csv(filename)#convert the date into more precise inputs: 
-        categories= np.array(pd.Series(df['Category'], dtype = 'category').cat.categories)
+	if test == False:
+		categories= np.array(pd.Series(df['Category'], dtype = 'category').cat.categories)
         print('Converting...')
         month = oh.take_elems(df['Dates'],5,7)
         print('Month OK.')
@@ -328,7 +329,7 @@ def main(debug = False):
                 #faire une barre de chargement
                 idxloc += 1;
                 #if(idxloc%(len(X_train)/batch_size/10)==0):
-                #    print idxloc*100/(len(X_train)/batch_size), '%'
+                    #print idxloc*100/(len(X_train)/batch_size), '%'
                 inputs, targets = batch
                 train_err += train_fn(inputs, targets)
                 train_batches += 1
@@ -341,13 +342,18 @@ def main(debug = False):
             for batch in iterate_minibatches(X_val, y_val, batch_size, shuffle=False):
                 idxloc += 1;
                 #if(idxloc%(len(X_val)/batch_size/10)==0):
-                #    print idxloc*100/(len(X_val)/batch_size), '%'
+                    #print idxloc*100/(len(X_val)/batch_size), '%'
                 inputs, targets = batch
                 err, acc = val_fn(inputs, targets)
                 val_err += err
                 val_acc += acc
                 val_batches += 1
-
+            print("Epoch {} of {} took {:.3f}s".format(
+            epoch + 1, num_epochs, time.time() - start_time))
+            print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
+            print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
+            print("  validation accuracy:\t\t{:.2f} %".format(
+            val_acc / val_batches * 100))
 #            # Then we print the results for this epoch:
 #            print("Epoch {} of {} took {:.3f}s".format(
 #            epoch + 1, num_epochs, time.time() - start_time))
@@ -360,14 +366,8 @@ def main(debug = False):
             res = np.random.randn(len(X), 39)
             return res
     # Then we print the results for this epoch:
-    if debug ==False:
-        print("Epoch {} of {} took {:.3f}s".format(
-            epoch + 1, num_epochs, time.time() - start_time))
-        print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
-        print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
-        print("  validation accuracy:\t\t{:.2f} %".format(
-        val_acc / val_batches * 100))
 
+    if debug ==False:
         prediction = lasagne.layers.get_output(network, deterministic=True)
         predict_function = theano.function([input_var], prediction,allow_input_downcast=True )
 
