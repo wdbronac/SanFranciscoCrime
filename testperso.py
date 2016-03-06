@@ -12,10 +12,10 @@ import pandas as pd
 
 
 #defining the parameters of the training
-batch_size = 20000
+batch_size =20000
 num_classes =39 
 size_one_hot_district = 4
-num_epochs = 60
+num_epochs = 4
 #TODO : definir un truc clean pour les inputs genre un truc qui fait bien des inputs, mais qui ne prend que la premiere partie et la met dans geo etc
 #TODO : faire aussi un truc qui met les categories au bon format
 
@@ -233,13 +233,15 @@ def build_mlp(input_var = None):
 
     #build the distributed representation for the geography: l_out_geo
     l_geo_tot_hid1 = lasagne.layers.DenseLayer(
-            l_geo_tot_out, num_units=800,
+            l_geo_tot_out, num_units=8,
             nonlinearity=lasagne.nonlinearities.rectify)
-    l_geo_tot_hid_1_drop = lasagne.layers.DropoutLayer(l_geo_tot_hid1, p=0.5)
+    #l_geo_tot_hid_1_drop = lasagne.layers.DropoutLayer(l_geo_tot_hid1, p=0.5)
+    l_geo_tot_hid_1_drop = l_geo_tot_hid1 
     l_geo_tot_hid2 = lasagne.layers.DenseLayer(
-            l_geo_tot_hid_1_drop, num_units=800,
+            l_geo_tot_hid_1_drop, num_units=8,
             nonlinearity=lasagne.nonlinearities.rectify)
-    l_geo_tot_out = lasagne.layers.DropoutLayer(l_geo_tot_hid2, p=0.5)
+    #l_geo_tot_out = lasagne.layers.DropoutLayer(l_geo_tot_hid2, p=0.5)
+    l_geo_tot_out =l_geo_tot_hid2 
 
 
     #TODO : attention j ai ecrit exactement la meme chose ici
@@ -248,37 +250,43 @@ def build_mlp(input_var = None):
     #l_date_in_drop = lasagne.layers.DropoutLayer(l_date_in, p=0.2)
     #hidden layer
     l_date_hid1 = lasagne.layers.DenseLayer(
-            l_date_in, num_units=50,
+            l_date_in, num_units=5,
             nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.GlorotUniform())
-    l_date_hid1_drop = lasagne.layers.DropoutLayer(l_date_hid1, p=0.5)
+    #l_date_hid1_drop = lasagne.layers.DropoutLayer(l_date_hid1, p=0.5)
+    l_date_hid1_drop = l_date_hid1
     #hidden layer
     l_date_hid2= lasagne.layers.DenseLayer(
-            l_date_hid1_drop, num_units=50,
+            l_date_hid1_drop, num_units=5,
             nonlinearity=lasagne.nonlinearities.rectify)
-    l_date_out = lasagne.layers.DropoutLayer(l_date_hid2, p=0.5)
+    #l_date_out = lasagne.layers.DropoutLayer(l_date_hid2, p=0.5)
+    l_date_out =l_date_hid2
 
 
     #concatenating the layers of both geographic and time information: (l_geo_hid2_drop, l_date_hid2_drop) = l_tot_in
     l_tot_in = lasagne.layers.concat([l_geo_tot_out, l_date_out], axis=1)
-    l_tot_in_drop = lasagne.layers.DropoutLayer(l_tot_in, p=0.2)
+    #l_tot_in_drop = lasagne.layers.DropoutLayer(l_tot_in, p=0.2)
+    l_tot_in_drop =l_tot_in 
 
     #adding some layers for distributed representations: l_tot_in > l_common_hid2_drop
     l_common_in = lasagne.layers.DenseLayer(
-            l_tot_in_drop, num_units=50*2,
+            l_tot_in_drop, num_units=5*2,
             nonlinearity=lasagne.nonlinearities.rectify)
-    l_common_in_drop = lasagne.layers.DropoutLayer(l_common_in, p=0.2)
+    #l_common_in_drop = lasagne.layers.DropoutLayer(l_common_in, p=0.2)
+    l_common_in_drop =l_common_in 
     #hidden layer
     l_common_hid1 = lasagne.layers.DenseLayer(
-            l_common_in_drop, num_units=70,
+            l_common_in_drop, num_units=7,
             nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.GlorotUniform())
-    l_common_hid1_drop = lasagne.layers.DropoutLayer(l_common_hid1, p=0.5)
+    #l_common_hid1_drop = lasagne.layers.DropoutLayer(l_common_hid1, p=0.5)
+    l_common_hid1_drop =l_common_hid1 
     #hidden layer
     l_common_hid2= lasagne.layers.DenseLayer(
-            l_common_hid1_drop, num_units=100,
+            l_common_hid1_drop, num_units=7,
             nonlinearity=lasagne.nonlinearities.rectify)
-    l_common_hid2_drop = lasagne.layers.DropoutLayer(l_common_hid2, p=0.5)
+    #l_common_hid2_drop = lasagne.layers.DropoutLayer(l_common_hid2, p=0.5)
+    l_common_hid2_drop =l_common_hid2
 
     #build the final layer: l_common_hid2drop > l_out: size: the number of classes (because one-hot encoding) 
     l_out = lasagne.layers.DenseLayer(
@@ -393,28 +401,30 @@ def main(debug = False):
     del(X_val)
     del(y_train)
     del(y_val)
-    file=open("../data/submit.csv", "wb") 
-    writer = csv.writer(file, delimiter = ',')
-    writer.writerow(np.append("Id", categories))
-    pred = np.empty((0,39))
-    memsize = 100000
-    print('Writing the data...')
-    index = 0
-    for start_idx in range(0, len(X_test) - memsize + 1, memsize):
-        prediction = predict_function(X_test[start_idx:start_idx+memsize])
-        for row_current in prediction: 
-            writer.writerow(np.append(index, row_current))
-            index +=1;
-            #if index*100%(len(X_test))==0:
-                #print index*100/(len(X_test)), '%'
-    prediction = predict_function(X_test[-(len(X_test)%memsize):])
-    for row_current in prediction: 
-        writer.writerow(np.append(index, row_current))
-        index +=1;
-        #if index%(len(X_test))==0:
-            #print index*100/(len(X_test)), '%'
-    del(prediction)
-    file.close()
-    print('Data written.')
-    
+    return predict_function
+
+#file=open("../data/submit.csv", "wb") 
+#writer = csv.writer(file, delimiter = ',')
+#writer.writerow(np.append("Id", categories))
+#pred = np.empty((0,39))
+#memsize = 100000
+#print('Writing the data...')
+#index = 0
+#for start_idx in range(0, len(X_test) - memsize + 1, memsize):
+#prediction = predict_function(X_test[start_idx:start_idx+memsize])
+#for row_current in prediction: 
+#    writer.writerow(np.append(index, row_current))
+#    index +=1;
+#    #if index*100%(len(X_test))==0:
+#	#print index*100/(len(X_test)), '%'
+#prediction = predict_function(X_test[-(len(X_test)%memsize):])
+#for row_current in prediction: 
+#writer.writerow(np.append(index, row_current))
+#index +=1;
+##if index%(len(X_test))==0:
+#    #print index*100/(len(X_test)), '%'
+#del(prediction)
+#file.close()
+#print('Data written.')
+
 
