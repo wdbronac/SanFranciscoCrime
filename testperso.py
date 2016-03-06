@@ -12,10 +12,10 @@ import pandas as pd
 
 
 #defining the parameters of the training
-batch_size =20000
+batch_size =5000
 num_classes =39 
 size_one_hot_district = 4
-num_epochs = 4
+num_epochs = 10
 #TODO : definir un truc clean pour les inputs genre un truc qui fait bien des inputs, mais qui ne prend que la premiere partie et la met dans geo etc
 #TODO : faire aussi un truc qui met les categories au bon format
 
@@ -75,16 +75,20 @@ def load_dataset( reload = False, test = False):
         print('DayOfWeek appended.')
         X = np.append(X,   district, axis =1 )
         print('Disctrict appended.')
-        X_max = X.max(axis=0)
+	X_mean = X.mean(axis=0)
+	X_var = X.var(axis=0)
         if test == False:
-            X = X/X_max
+            X = (X-X_mean)/X_var
 	if test == True: 
-		f = open('X_max.save', 'rb')
-		X_max= cPickle.load(f)
+		f = open('X_mean.save', 'rb')
+		X_mean= cPickle.load(f)
+		f.close()
+		f = open('X_var.save', 'rb')
+		X_var= cPickle.load(f)
 		f.close()
 		print('Saving dataset...')
 		f = open('X_test.save', 'wb')
-                X = X/X_max
+	        X = (X-X_mean)/X_var
 		cPickle.dump(X, f, protocol=cPickle.HIGHEST_PROTOCOL)
 		f.close()
 		return X
@@ -130,8 +134,11 @@ def load_dataset( reload = False, test = False):
 		f = open('categories.save', 'wb')
 		cPickle.dump(categories, f, protocol=cPickle.HIGHEST_PROTOCOL)
 		f.close()
-		f = open('X_max.save', 'wb')
-		cPickle.dump(X_max, f, protocol=cPickle.HIGHEST_PROTOCOL)
+		f = open('X_mean.save', 'wb')
+		cPickle.dump(X_mean, f, protocol=cPickle.HIGHEST_PROTOCOL)
+		f.close()
+		f = open('X_var.save', 'wb')
+		cPickle.dump(X_var, f, protocol=cPickle.HIGHEST_PROTOCOL)
 		f.close()
 		print('Dataset saved.')
 		return  X_train, y_train, X_val, y_val, classes, categories
@@ -167,8 +174,11 @@ def load_dataset( reload = False, test = False):
 		f = open('categories.save', 'rb')
 		categories= cPickle.load(f)
 		f.close()
-		f = open('X_max.save', 'rb')
-		X_max= cPickle.load(f)
+		f = open('X_mean.save', 'rb')
+		X_mean= cPickle.load(f)
+		f.close()
+		f = open('X_var.save', 'rb')
+		X_var= cPickle.load(f)
 		f.close()
 		print('Dataset loaded.')
         #X_train, y_train, X_val, y_val = loaded_objects
