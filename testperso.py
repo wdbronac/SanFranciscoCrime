@@ -243,12 +243,12 @@ def build_custom(input_var = None):
 
     #build the distributed representation for the geography: l_out_geo
     l_geo_tot_hid1 = lasagne.layers.DenseLayer(
-            l_geo_tot_out, num_units=8,
+            l_geo_tot_out, num_units=80,
             nonlinearity=lasagne.nonlinearities.rectify)
     #l_geo_tot_hid_1_drop = lasagne.layers.DropoutLayer(l_geo_tot_hid1, p=0.5)
     l_geo_tot_hid_1_drop = l_geo_tot_hid1 
     l_geo_tot_hid2 = lasagne.layers.DenseLayer(
-            l_geo_tot_hid_1_drop, num_units=8,
+            l_geo_tot_hid_1_drop, num_units=80,
             nonlinearity=lasagne.nonlinearities.rectify)
     #l_geo_tot_out = lasagne.layers.DropoutLayer(l_geo_tot_hid2, p=0.5)
     l_geo_tot_out =l_geo_tot_hid2 
@@ -260,14 +260,14 @@ def build_custom(input_var = None):
     #l_date_in_drop = lasagne.layers.DropoutLayer(l_date_in, p=0.2)
     #hidden layer
     l_date_hid1 = lasagne.layers.DenseLayer(
-            l_date_in, num_units=5,
+            l_date_in, num_units=50,
             nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.GlorotUniform())
     #l_date_hid1_drop = lasagne.layers.DropoutLayer(l_date_hid1, p=0.5)
     l_date_hid1_drop = l_date_hid1
     #hidden layer
     l_date_hid2= lasagne.layers.DenseLayer(
-            l_date_hid1_drop, num_units=5,
+            l_date_hid1_drop, num_units=50,
             nonlinearity=lasagne.nonlinearities.rectify)
     #l_date_out = lasagne.layers.DropoutLayer(l_date_hid2, p=0.5)
     l_date_out =l_date_hid2
@@ -280,20 +280,20 @@ def build_custom(input_var = None):
 
     #adding some layers for distributed representations: l_tot_in > l_common_hid2_drop
     l_common_in = lasagne.layers.DenseLayer(
-            l_tot_in_drop, num_units=5*2,
+            l_tot_in_drop, num_units=50*2,
             nonlinearity=lasagne.nonlinearities.rectify)
     #l_common_in_drop = lasagne.layers.DropoutLayer(l_common_in, p=0.2)
     l_common_in_drop =l_common_in 
     #hidden layer
     l_common_hid1 = lasagne.layers.DenseLayer(
-            l_common_in_drop, num_units=7,
+            l_common_in_drop, num_units=70,
             nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.GlorotUniform())
     #l_common_hid1_drop = lasagne.layers.DropoutLayer(l_common_hid1, p=0.5)
     l_common_hid1_drop =l_common_hid1 
     #hidden layer
     l_common_hid2= lasagne.layers.DenseLayer(
-            l_common_hid1_drop, num_units=7,
+            l_common_hid1_drop, num_units=70,
             nonlinearity=lasagne.nonlinearities.rectify)
     #l_common_hid2_drop = lasagne.layers.DropoutLayer(l_common_hid2, p=0.5)
     l_common_hid2_drop =l_common_hid2
@@ -301,6 +301,45 @@ def build_custom(input_var = None):
     #build the final layer: l_common_hid2drop > l_out: size: the number of classes (because one-hot encoding) 
     l_out = lasagne.layers.DenseLayer(
             l_common_hid2_drop, num_units=num_classes,
+            nonlinearity=lasagne.nonlinearities.softmax)
+    print('Model built.')
+    return l_out
+
+
+def build_mlp(input_var = None): 
+    print('Building model...')
+    l_in= lasagne.layers.InputLayer(shape = (None,23), input_var = input_var)
+    ##build the network connected to the geography input_geo > l_geo_hid2_drop
+    l_common_hid= lasagne.layers.DenseLayer(
+            l_in, num_units=500,
+            nonlinearity=lasagne.nonlinearities.rectify)
+    #l_common_hid2_drop = lasagne.layers.DropoutLayer(l_common_hid2, p=0.5)
+
+    #l_common_hid= lasagne.layers.DenseLayer(
+    #        l_in, num_units=500,
+    #        nonlinearity=lasagne.nonlinearities.rectify)
+    #l_common_hid2_drop = lasagne.layers.DropoutLayer(l_common_hid2, p=0.5)
+    #
+    #l_common_hid= lasagne.layers.DenseLayer(
+    #        l_in, num_units=500,
+    #        nonlinearity=lasagne.nonlinearities.rectify)
+    #l_common_hid2_drop = lasagne.layers.DropoutLayer(l_common_hid2, p=0.5)
+
+    #
+    #l_common_hid= lasagne.layers.DenseLayer(
+    #        l_in, num_units=500,
+    #        nonlinearity=lasagne.nonlinearities.rectify)
+    #l_common_hid2_drop = lasagne.layers.DropoutLayer(l_common_hid2, p=0.5)
+
+
+    #l_common_hid= lasagne.layers.DenseLayer(
+    #        l_in, num_units=500,
+    #        nonlinearity=lasagne.nonlinearities.rectify)
+    #l_common_hid2_drop = lasagne.layers.DropoutLayer(l_common_hid2, p=0.5)
+
+    #build the final layer: l_common_hid2drop > l_out: size: the number of classes (because one-hot encoding) 
+    l_out = lasagne.layers.DenseLayer(
+            l_common_hid, num_units=num_classes,
             nonlinearity=lasagne.nonlinearities.softmax)
     print('Model built.')
     return l_out
@@ -364,7 +403,9 @@ def main(debug = False, custom = True):
                 #if(idxloc%(len(X_train)/batch_size/10)==0):
                     #print idxloc*100/(len(X_train)/batch_size), '%'
                 inputs, targets = batch
-                train_err += train_fn(inputs, targets)
+                err, acc = train_fn(inputs, targets)
+                train_err += err
+                train_acc += acc
                 train_batches += 1
                 # And a full pass over the validation data:
             val_err = 0
@@ -387,6 +428,8 @@ def main(debug = False, custom = True):
             print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
             print("  validation accuracy:\t\t{:.2f} %".format(
             val_acc / val_batches * 100))
+            print("  train accuracy:\t\t{:.2f} %".format(
+            train_acc / train_batches * 100))
 #            # Then we print the results for this epoch:
 #            print("Epoch {} of {} took {:.3f}s".format(
 #            epoch + 1, num_epochs, time.time() - start_time))
