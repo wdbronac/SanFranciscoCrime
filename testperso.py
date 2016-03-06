@@ -30,6 +30,7 @@ def load_dataset( reload = False, test = False):
         #import some points of the dataset
         print('Loading dataset...')
         df = pd.read_csv(filename)#convert the date into more precise inputs: 
+        categories= np.array(pd.Series(df['Category'], dtype = 'category').cat.categories)
         print('Converting...')
         month = oh.take_elems(df['Dates'],5,7)
         print('Month OK.')
@@ -55,7 +56,7 @@ def load_dataset( reload = False, test = False):
 		df['Category'] = pd.Series(df['Category'], dtype = 'category').cat.rename_categories(range(num_classes))
 		y= df['Category'].values
 		print('Categories transformed into indexes.')
-		classes = pd.Series(df['Category'], dtype = 'category').cat.categories    
+                classes = pd.Series(df['Category'], dtype = 'category').cat.categories    
 	print('Creating the input vector...')
         X = latitudes.reshape(len(latitudes),1) #TODO : verifier que c est bien la bonne shape avec ipython
         print('Latitudes appended.')
@@ -118,8 +119,11 @@ def load_dataset( reload = False, test = False):
 		f = open('classes.save', 'wb')
 		cPickle.dump(classes, f, protocol=cPickle.HIGHEST_PROTOCOL)
 		f.close()
+		f = open('categories.save', 'wb')
+		cPickle.dump(categories, f, protocol=cPickle.HIGHEST_PROTOCOL)
+		f.close()
 		print('Dataset saved.')
-		return  X_train, y_train, X_val, y_val, classes
+		return  X_train, y_train, X_val, y_val, classes, categories
     else : 
         #f = open('data.save', 'r')
         #loaded_objects = []
@@ -149,9 +153,12 @@ def load_dataset( reload = False, test = False):
 		f = open('classes.save', 'rb')
 		classes= cPickle.load(f)
 		f.close()
+		f = open('categories.save', 'rb')
+		categories= cPickle.load(f)
+		f.close()
 		print('Dataset loaded.')
         #X_train, y_train, X_val, y_val = loaded_objects
-		return  X_train, y_train, X_val, y_val, classes
+		return  X_train, y_train, X_val, y_val, classes, categories
     return 0
 
 
@@ -278,67 +285,68 @@ def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
             excerpt = slice(start_idx, start_idx + batchsize)
         yield inputs[excerpt], targets[excerpt]
 
-def main():
+def main(debug = False):
     # Load the dataset
     #X_train, y_train, X_val, y_val, X_test, y_test = load_dataset()
-    X_train, y_train, X_val, y_val, classes= load_dataset()
+    X_train, y_train, X_val, y_val, classes, categories= load_dataset()
     # Prepare Theano variables for inputs and targets
-    input_var = T.fmatrix('inputs')
-    target_var = T.ivector('targets')
-    # Create neural network model
-    network = build_mlp(input_var)
+    if debug == False: 
+        input_var = T.fmatrix('inputs')
+        target_var = T.ivector('targets')
+        # Create neural network model
+        network = build_mlp(input_var)
 
-    prediction = lasagne.layers.get_output(network)
-    loss = lasagne.objectives.categorical_crossentropy(prediction, target_var)
-    loss = loss.mean()
+        prediction = lasagne.layers.get_output(network)
+        loss = lasagne.objectives.categorical_crossentropy(prediction, target_var)
+        loss = loss.mean()
 
-    params = lasagne.layers.get_all_params(network, trainable=True)
-    updates = lasagne.updates.nesterov_momentum(
-            loss, params, learning_rate=0.01, momentum=0.9)
+        params = lasagne.layers.get_all_params(network, trainable=True)
+        updates = lasagne.updates.nesterov_momentum(
+                loss, params, learning_rate=0.01, momentum=0.9)
 
-    test_prediction = lasagne.layers.get_output(network, deterministic=True)
-    test_loss = lasagne.objectives.categorical_crossentropy(test_prediction,
-            target_var)
-    test_loss = test_loss.mean()
-    test_acc = T.mean(T.eq(T.argmax(test_prediction, axis=1), target_var),dtype=theano.config.floatX)
-
-
-
-    train_fn = theano.function([input_var, target_var], loss, updates=updates, allow_input_downcast=True)
+        test_prediction = lasagne.layers.get_output(network, deterministic=True)
+        test_loss = lasagne.objectives.categorical_crossentropy(test_prediction,
+                target_var)
+        test_loss = test_loss.mean()
+        test_acc = T.mean(T.eq(T.argmax(test_prediction, axis=1), target_var),dtype=theano.config.floatX)
 
 
-    val_fn = theano.function([input_var, target_var], [test_loss, test_acc], allow_input_downcast=True)
 
-    for epoch in range(num_epochs):
-        # In each epoch, we do a full pass over the training data:
-        train_err = 0
-        train_batches = 0
-        start_time = time.time()
-        print 'Training:'
-        idxloc = 0;
-        for  batch in iterate_minibatches(X_train, y_train, batch_size, shuffle=True):
-            #faire une barre de chargement
-            idxloc += 1;
-            #if(idxloc%(len(X_train)/batch_size/10)==0):
-            #    print idxloc*100/(len(X_train)/batch_size), '%'
-            inputs, targets = batch
-            train_err += train_fn(inputs, targets)
-            train_batches += 1
-            # And a full pass over the validation data:
-        val_err = 0
-        val_acc = 0
-        val_batches = 0
-        print('Testing:')
-        idxloc = 0;
-        for batch in iterate_minibatches(X_val, y_val, batch_size, shuffle=False):
-            idxloc += 1;
-            #if(idxloc%(len(X_val)/batch_size/10)==0):
-            #    print idxloc*100/(len(X_val)/batch_size), '%'
-            inputs, targets = batch
-            err, acc = val_fn(inputs, targets)
-            val_err += err
-            val_acc += acc
-            val_batches += 1
+        train_fn = theano.function([input_var, target_var], loss, updates=updates, allow_input_downcast=True)
+
+
+        val_fn = theano.function([input_var, target_var], [test_loss, test_acc], allow_input_downcast=True)
+
+        for epoch in range(num_epochs):
+            # In each epoch, we do a full pass over the training data:
+            train_err = 0
+            train_batches = 0
+            start_time = time.time()
+            print 'Training:'
+            idxloc = 0;
+            for  batch in iterate_minibatches(X_train, y_train, batch_size, shuffle=True):
+                #faire une barre de chargement
+                idxloc += 1;
+                #if(idxloc%(len(X_train)/batch_size/10)==0):
+                #    print idxloc*100/(len(X_train)/batch_size), '%'
+                inputs, targets = batch
+                train_err += train_fn(inputs, targets)
+                train_batches += 1
+                # And a full pass over the validation data:
+            val_err = 0
+            val_acc = 0
+            val_batches = 0
+            print('Testing:')
+            idxloc = 0;
+            for batch in iterate_minibatches(X_val, y_val, batch_size, shuffle=False):
+                idxloc += 1;
+                #if(idxloc%(len(X_val)/batch_size/10)==0):
+                #    print idxloc*100/(len(X_val)/batch_size), '%'
+                inputs, targets = batch
+                err, acc = val_fn(inputs, targets)
+                val_err += err
+                val_acc += acc
+                val_batches += 1
 
 #            # Then we print the results for this epoch:
 #            print("Epoch {} of {} took {:.3f}s".format(
@@ -347,42 +355,46 @@ def main():
 #            print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
 #            print("  validation accuracy:\t\t{:.2f} %".format(
 #                val_acc / val_batches * 100))
-
-        # Then we print the results for this epoch:
+    else : 
+        def predict_function(X): 
+            res = np.random.randn(len(X), 39)
+            return res
+    # Then we print the results for this epoch:
+    if debug ==False:
         print("Epoch {} of {} took {:.3f}s".format(
             epoch + 1, num_epochs, time.time() - start_time))
         print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
         print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
         print("  validation accuracy:\t\t{:.2f} %".format(
-            val_acc / val_batches * 100))
+        val_acc / val_batches * 100))
 
-	prediction = lasagne.layers.get_output(network, deterministic=True)
-	predict_function = theano.function([input_var], prediction,allow_input_downcast=True )
+        prediction = lasagne.layers.get_output(network, deterministic=True)
+        predict_function = theano.function([input_var], prediction,allow_input_downcast=True )
 
-	X_test = load_dataset(  test = True)	
-        pred = np.array([], dtype = float32
-	#result =  predict_function(X_test)
-	#df_final = pd.DataFrame(result, columns=["Id", classes])
-	#df_final.to_csv('../data/finalSubmission2.csv')  
-        del(X_train)
-        del(X_val)
-        del(y_train)
-        del(y_test)
-        with open('submit.csv', 'wb') as csvfile:
-            writer = csv.writer(csvfile, delimiter = ',')
-            writer.writerow=(["Id", classes])
-        pred = np.empty((0,39))
-        memsize = 10000
-        for start_idx in range(0, len(X_test) - memsize + 1, memsize):
-            prediction = predict_function(X_test[start_idx:start_idx+memsize]
-            with open('submit.csv', 'wb') as csvfile:
-                writer = csv.writer(csvfile, delimiter = ',')
-                for row_current in prediction: 
-                    writer.writerow=(row_current)
-        prediction = predict_function(X[len(X_test) - memsize:])
-        with open('submit.csv', 'wb') as csvfile:
-            writer = csv.writer(csvfile, delimiter = ',')
-            for row_current in prediction: 
-                writer.writerow=(row_current)
+    X_test = load_dataset(  test = True)	
+    pred = np.empty((0, 39))
+    #result =  predict_function(X_test)
+    #df_final = pd.DataFrame(result, columns=["Id", classes])
+    #df_final.to_csv('../data/finalSubmission2.csv')  
+    del(X_train)
+    del(X_val)
+    del(y_train)
+    del(y_val)
+    file=open("../data/submit.csv", "wb") 
+    writer = csv.writer(file, delimiter = ',')
+    writer.writerow(np.append("Id", categories))
+    pred = np.empty((0,39))
+    memsize = 100000
+    print('Writing the data...')
+    for start_idx in range(0, len(X_test) - memsize + 1, memsize):
+        prediction = predict_function(X_test[start_idx:start_idx+memsize])
+        for row_current in prediction: 
+            writer.writerow(row_current)
+    prediction = predict_function(X_test[-(len(X_test)%memsize):])
+    for row_current in prediction: 
+        writer.writerow(row_current)
+    del(prediction)
+    file.close()
+    print('Data written.')
+    
 
-	#return predict_function, X_test, prediction
