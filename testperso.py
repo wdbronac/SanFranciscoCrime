@@ -134,7 +134,7 @@ def load_dataset( reload = False, test = False):
 		cPickle.dump(X_max, f, protocol=cPickle.HIGHEST_PROTOCOL)
 		f.close()
 		print('Dataset saved.')
-		return  X_train, y_train, X_val, y_val, classes, categories, X_max
+		return  X_train, y_train, X_val, y_val, classes, categories
     else : 
         #f = open('data.save', 'r')
         #loaded_objects = []
@@ -172,7 +172,7 @@ def load_dataset( reload = False, test = False):
 		f.close()
 		print('Dataset loaded.')
         #X_train, y_train, X_val, y_val = loaded_objects
-		return  X_train, y_train, X_val, y_val, classes, categories, X_max
+		return  X_train, y_train, X_val, y_val, classes, categories
     return 0
 
 
